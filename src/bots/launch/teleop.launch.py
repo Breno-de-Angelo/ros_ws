@@ -27,6 +27,9 @@ def generate_launch_description():
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
     gz_launch_path = PathJoinSubstitution([pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py'])
 
+    # RViz
+    rviz_config_file = PathJoinSubstitution([pkg_path, 'rviz', 'fixed_robot.rviz'])
+
     # Joystick Teleop
     pkg_teleop = get_package_share_directory('teleop_twist_joy')
     teleop_launch_path = PathJoinSubstitution([pkg_teleop, 'launch', 'teleop-launch.py'])
@@ -73,6 +76,14 @@ def generate_launch_description():
             arguments=['-topic', 'robot_description',
                        '-name', 'robot',
                        'z', '0.1'],
+        ),
+
+        # RViz
+        Node(
+            package='rviz2',
+            executable='rviz2',
+            output='screen',
+            arguments=['-d', rviz_config_file],
         ),
 
         # Joystick Teleop
