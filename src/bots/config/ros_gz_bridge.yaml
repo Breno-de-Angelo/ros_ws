@@ -1,0 +1,17 @@
+- ros_topic_name: "cmd_vel_unstamped"
+  gz_topic_name: "/model/diff_bot/cmd_vel"
+  ros_type_name: "geometry_msgs/msg/Twist"
+  gz_type_name: "gz.msgs.Twist"
+  direction: ROS_TO_GZ  # BIDIRECTIONAL or ROS_TO_GZ or GZ_TO_ROS
+
+- ros_topic_name: "scan"
+  gz_topic_name: "/scan"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "gz.msgs.LaserScan"
+  direction: GZ_TO_ROS  # BIDIRECTIONAL or ROS_TO_GZ or GZ_TO_ROS
+
+- ros_topic_name: "imu"
+  gz_topic_name: "/imu"
+  ros_type_name: "sensor_msgs/msg/Imu"
+  gz_type_name: "gz.msgs.IMU"
+  direction: GZ_TO_ROS  # BIDIRECTIONAL or ROS_TO_GZ or GZ_TO_ROS
