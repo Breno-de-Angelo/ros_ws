@@ -10,6 +10,7 @@ from launch_ros.actions import Node
 from launch.substitutions import (
     PathJoinSubstitution,
     LaunchConfiguration,
+    Command,
 )
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
@@ -17,6 +18,10 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 def generate_launch_description():
     pkg_name = 'bots'
     pkg_path = get_package_share_directory(pkg_name)
+
+    # Robot State Publisher
+    xacro_file = PathJoinSubstitution([pkg_path, 'description', 'diff_bot', 'robot.urdf.xacro'])
+    robot_description_config = Command(['xacro ', xacro_file, ' use_ros2_control:=', 'False', ' sim_mode:=', 'True'])
 
     # Gazebo
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
@@ -27,11 +32,19 @@ def generate_launch_description():
     teleop_launch_path = PathJoinSubstitution([pkg_teleop, 'launch', 'teleop-launch.py'])
 
     return LaunchDescription([
+
+        # Robot State Publisher
+        Node(
+            package='robot_state_publisher',
+            executable='robot_state_publisher',
+            output='screen',
+            parameters=[{'robot_description': robot_description_config, 'use_sim_time': True}],
+        ),
         
         # Gazebo
         DeclareLaunchArgument(
             'world',
-            default_value=os.path.join(pkg_path, 'worlds', 'diff_drive.sdf'),
+            default_value=os.path.join(pkg_path, 'worlds', 'empty_world.sdf'),
             description='SDF world file',
         ),
         DeclareLaunchArgument(
@@ -52,6 +65,14 @@ def generate_launch_description():
             parameters=[
                 {'config_file': LaunchConfiguration('ros_gz_bridge_config_file')}
             ]
+        ),
+        Node(
+            package='ros_gz_sim',
+            executable='create',
+            output='screen',
+            arguments=['-topic', 'robot_description',
+                       '-name', 'robot',
+                       'z', '0.1'],
         ),
 
         # Joystick Teleop
