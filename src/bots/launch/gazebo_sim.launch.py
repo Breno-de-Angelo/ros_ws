@@ -47,7 +47,7 @@ def generate_launch_description():
         # Gazebo
         DeclareLaunchArgument(
             'world',
-            default_value=os.path.join(pkg_path, 'worlds', 'empty_world.sdf'),
+            default_value=os.path.join(pkg_path, 'worlds', 'warehouse.world'),
             description='SDF world file',
         ),
         DeclareLaunchArgument(
@@ -69,13 +69,18 @@ def generate_launch_description():
                 {'config_file': LaunchConfiguration('ros_gz_bridge_config_file')}
             ]
         ),
+        # Node(
+        #     package="ros_gz_image",
+        #     executable="image_bridge",
+        #     arguments=["/camera/image_raw"]
+        # ),
         Node(
             package='ros_gz_sim',
             executable='create',
             output='screen',
             arguments=['-topic', 'robot_description',
                        '-name', 'robot',
-                       'z', '0.1'],
+                       'z', '0.5'],
         ),
 
         # RViz
