@@ -319,7 +319,7 @@
           <update_rate>20</update_rate>
           <visualize>true</visualize>
           <topic>imu</topic>
-      </sensor>
+        </sensor>
       </link>
 
       <joint name='left_wheel_joint' type='revolute'>
