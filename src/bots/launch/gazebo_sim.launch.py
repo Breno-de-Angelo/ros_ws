@@ -30,10 +30,6 @@ def generate_launch_description():
     # RViz
     rviz_config_file = PathJoinSubstitution([pkg_path, 'rviz', 'fixed_robot.rviz'])
 
-    # Joystick Teleop
-    pkg_teleop = get_package_share_directory('teleop_twist_joy')
-    teleop_launch_path = PathJoinSubstitution([pkg_teleop, 'launch', 'teleop-launch.py'])
-
     return LaunchDescription([
 
         # Robot State Publisher
@@ -69,11 +65,11 @@ def generate_launch_description():
                 {'config_file': LaunchConfiguration('ros_gz_bridge_config_file')}
             ]
         ),
-        # Node(
-        #     package="ros_gz_image",
-        #     executable="image_bridge",
-        #     arguments=["/camera/image_raw"]
-        # ),
+        Node(
+            package="ros_gz_image",
+            executable="image_bridge",
+            arguments=["/camera/image_raw"]
+        ),
         Node(
             package='ros_gz_sim',
             executable='create',
@@ -89,6 +85,7 @@ def generate_launch_description():
             executable='rviz2',
             output='screen',
             arguments=['-d', rviz_config_file],
+            parameters=[{'use_sim_time': True}]
         ),
 
         # Joystick Teleop
@@ -97,16 +94,21 @@ def generate_launch_description():
             default_value=os.path.join(pkg_path, 'config', 'joystick.yaml'),
             description='Joystick YAML config file',
         ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(teleop_launch_path),
-            launch_arguments={
-                'publish_stamped_twist': 'True',
-                'config_filepath': LaunchConfiguration('joystick_config_file'),
-            }.items(),
+        Node(
+            package='joy',
+            executable='joy_node',
+            parameters=[LaunchConfiguration('joystick_config_file'), {'use_sim_time': True}],
+        ),
+        Node(
+            package='teleop_twist_joy',
+            executable='teleop_node',
+            name='teleop_node',
+            parameters=[LaunchConfiguration('joystick_config_file'), {'use_sim_time': True}],
         ),
         Node(
             package='twist_stamper',
             executable='twist_unstamper',
+            parameters=[{'use_sim_time': True}],
             remappings=[('/cmd_vel_in', '/cmd_vel'),
                         ('/cmd_vel_out', '/cmd_vel_unstamped')],
         ),
