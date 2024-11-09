@@ -21,7 +21,7 @@ def generate_launch_description():
 
     # Robot State Publisher
     xacro_file = PathJoinSubstitution([pkg_path, 'description', 'diff_bot', 'robot.urdf.xacro'])
-    robot_description_config = Command(['xacro ', xacro_file, ' use_ros2_control:=', 'False', ' sim_mode:=', 'True'])
+    robot_description_config = Command(['xacro ', xacro_file, ' use_ros2_control:=', 'True', ' sim_mode:=', 'True'])
 
     # Gazebo
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
@@ -79,6 +79,18 @@ def generate_launch_description():
                        'z', '0.5'],
         ),
 
+        # ROS2 Control
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['diff_cont']
+        ),
+        Node(
+            package='controller_manager',
+            executable='spawner',
+            arguments=['joint_broad']
+        ),
+
         # RViz
         Node(
             package='rviz2',
@@ -104,12 +116,21 @@ def generate_launch_description():
             executable='teleop_node',
             name='teleop_node',
             parameters=[LaunchConfiguration('joystick_config_file'), {'use_sim_time': True}],
+            remappings=[('/cmd_vel','/cmd_vel_joy')]
+        ),
+
+        # Twist MUX
+        Node(
+            package="twist_mux",
+            executable="twist_mux",
+            parameters=[os.path.join(pkg_path, 'config', 'twist_mux.yaml'), {'use_sim_time': True}],
+            remappings=[('/cmd_vel_out','/diff_cont/cmd_vel')]
         ),
         Node(
             package='twist_stamper',
             executable='twist_unstamper',
             parameters=[{'use_sim_time': True}],
-            remappings=[('/cmd_vel_in', '/cmd_vel'),
-                        ('/cmd_vel_out', '/cmd_vel_unstamped')],
+            remappings=[('/cmd_vel_in', '/diff_cont/cmd_vel'),
+                        ('/cmd_vel_out', '/diff_cont/cmd_vel_unstamped')],
         ),
     ])
