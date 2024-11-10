@@ -16,19 +16,19 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
-    pkg_name = 'bots'
+    pkg_name = 'diff_bot'
     pkg_path = get_package_share_directory(pkg_name)
 
     # Robot State Publisher
     xacro_file = PathJoinSubstitution([pkg_path, 'description', 'diff_bot', 'robot.urdf.xacro'])
     robot_description_config = Command(['xacro ', xacro_file, ' use_ros2_control:=', 'True', ' sim_mode:=', 'True'])
 
-    # Gazebo
-    pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
-    gz_launch_path = PathJoinSubstitution([pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py'])
-
     # RViz
     rviz_config_file = PathJoinSubstitution([pkg_path, 'rviz', 'fixed_robot.rviz'])
+
+    # SLAM-Toolbox
+    pkg_slam_toolbox = get_package_share_directory('slam_toolbox')
+    slam_toolbox_launch_path = PathJoinSubstitution([pkg_slam_toolbox, 'launch', 'online_async_launch.py'])
 
     return LaunchDescription([
 
@@ -41,42 +41,8 @@ def generate_launch_description():
         ),
         
         # Gazebo
-        DeclareLaunchArgument(
-            'world',
-            default_value=os.path.join(pkg_path, 'worlds', 'warehouse.world'),
-            description='SDF world file',
-        ),
-        DeclareLaunchArgument(
-            'ros_gz_bridge_config_file',
-            default_value=os.path.join(pkg_path, 'config', 'ros_gz_bridge.yaml'),
-            description='ROS_GZ bridge YAML config file',
-        ),
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(gz_launch_path),
-            launch_arguments={
-                'gz_args': ['-r ', LaunchConfiguration('world')],
-                'on_exit_shutdown': 'True',
-            }.items(),
-        ),
-        Node(
-            package='ros_gz_bridge',
-            executable='parameter_bridge',
-            parameters=[
-                {'config_file': LaunchConfiguration('ros_gz_bridge_config_file')}
-            ]
-        ),
-        Node(
-            package="ros_gz_image",
-            executable="image_bridge",
-            arguments=["/camera/image_raw"]
-        ),
-        Node(
-            package='ros_gz_sim',
-            executable='create',
-            output='screen',
-            arguments=['-topic', 'robot_description',
-                       '-name', 'robot',
-                       'z', '0.5'],
+            PathJoinSubstitution([pkg_path, 'launch', 'gazebo.launch.py'])
         ),
 
         # ROS2 Control
@@ -132,5 +98,26 @@ def generate_launch_description():
             parameters=[{'use_sim_time': True}],
             remappings=[('/cmd_vel_in', '/diff_cont/cmd_vel'),
                         ('/cmd_vel_out', '/diff_cont/cmd_vel_unstamped')],
+        ),
+
+        # Robot Localization - choose one of the following: EKF, UKF
+        Node(
+            package='robot_localization',
+            executable='ekf_node',
+            name='ekf_filter_node',
+            output='screen',
+            parameters=[os.path.join(pkg_path, 'config', 'ekf.yaml'), {'use_sim_time': True}]
+        ),
+        # Node(
+        #     package='robot_localization',
+        #     executable='ukf_node',
+        #     name='ukf_filter_node',
+        #     output='screen',
+        #     parameters=[os.path.join(pkg_path, 'config', 'ukf.yaml'), {'use_sim_time': True}]
+        # ),
+
+        # Mapping
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(slam_toolbox_launch_path),
         ),
     ])
