@@ -15,4 +15,10 @@
   <export>
     <build_type>ament_cmake</build_type>
   </export>
+
+  <depend>ros-jazzy-ros-gz</depend>
+  <depend>ros-jazzy-gz-ros2-control</depend>
+  <depend>ros-jazzy-twist-mux</depend>
+  <depend>ros-jazzy-twist-stamper</depend>
+  <depend>ros-jazzy-ros2-controllers</depend>
 </package>
