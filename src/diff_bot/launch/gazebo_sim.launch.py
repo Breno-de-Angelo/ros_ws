@@ -7,8 +7,8 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
-    pkg_name = 'diff_bot'
-    pkg_path = get_package_share_directory(pkg_name)
+    autonomous_base_path = get_package_share_directory('autonomous_base')
+    robot_path = get_package_share_directory('diff_bot')
 
     # SLAM-Toolbox
     pkg_slam_toolbox = get_package_share_directory('slam_toolbox')
@@ -18,32 +18,60 @@ def generate_launch_description():
 
         # Robot State Publisher
         IncludeLaunchDescription(
-            PathJoinSubstitution([pkg_path, 'launch', 'include', 'robot_state_publisher.launch.py'])
+            PathJoinSubstitution([autonomous_base_path, 'launch', 'robot_state_publisher.launch.py']),
+            launch_arguments={
+                'use_sim_time': 'true',
+                'robot_xacro': PathJoinSubstitution([robot_path, 'description', 'diff_bot', 'robot.urdf.xacro']),
+            }.items()
         ),
         
         # Gazebo
         IncludeLaunchDescription(
-            PathJoinSubstitution([pkg_path, 'launch', 'include', 'gazebo.launch.py'])
+            PathJoinSubstitution([autonomous_base_path, 'launch', 'gazebo.launch.py']),
+            launch_arguments={
+                'ros_gz_bridge_config_file': PathJoinSubstitution([robot_path, 'config', 'ros_gz_bridge.yaml']),
+                'robot_spawn_height': '0.5',
+                'use_image_bridge': 'true',
+            }.items()
         ),
 
         # ROS2 Control
         IncludeLaunchDescription(
-            PathJoinSubstitution([pkg_path, 'launch', 'include', 'ros2_control.launch.py'])
+            PathJoinSubstitution([autonomous_base_path, 'launch', 'ros2_control.launch.py']),
+            launch_arguments={
+                'robot_controller': 'diff_cont',
+                'joint_broadcaster': 'joint_broad',
+            }.items()
         ),
 
         # Joystick Teleop
         IncludeLaunchDescription(
-            PathJoinSubstitution([pkg_path, 'launch', 'include', 'joystick.launch.py'])
+            PathJoinSubstitution([autonomous_base_path, 'launch', 'joystick.launch.py']),
+            launch_arguments={
+                'use_sim_time': 'true',
+                'joystick_config_file': PathJoinSubstitution([robot_path, 'config', 'joystick.yaml']),
+            }.items()
         ),
 
         # Twist MUX
         IncludeLaunchDescription(
-            PathJoinSubstitution([pkg_path, 'launch', 'include', 'twist_mux.launch.py'])
+            PathJoinSubstitution([autonomous_base_path, 'launch', 'twist_mux.launch.py']),
+            launch_arguments={
+                'use_sim_time': 'true',
+                'twist_mux_config_file': PathJoinSubstitution([robot_path, 'config', 'twist_mux.yaml']),
+                'stamped_cmd_vel_out_topic': '/diff_cont/cmd_vel',
+                'unstamped_cmd_vel_out_topic': '/diff_cont/cmd_vel_unstamped'
+            }.items()
         ),
 
         # Robot Localization
         IncludeLaunchDescription(
-            PathJoinSubstitution([pkg_path, 'launch', 'include', 'fused_odom.launch.py'])
+            PathJoinSubstitution([autonomous_base_path, 'launch', 'fused_odom.launch.py']),
+            launch_arguments={
+                'use_sim_time': 'true',
+                'localization_algorithm': 'ekf',
+                'config_file': PathJoinSubstitution([robot_path, 'config', 'ekf.yaml'])
+            }.items()
         ),
 
         # Mapping
@@ -56,7 +84,7 @@ def generate_launch_description():
             package='rviz2',
             executable='rviz2',
             output='screen',
-            arguments=['-d', PathJoinSubstitution([pkg_path, 'rviz', 'fixed_robot.rviz'])],
+            arguments=['-d', PathJoinSubstitution([robot_path, 'rviz', 'slam_toolbox.rviz'])],
             parameters=[{'use_sim_time': True}]
         ),
     ])
