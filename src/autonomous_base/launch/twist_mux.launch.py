@@ -28,14 +28,13 @@ def generate_launch_description():
         description='Name of the output unstamped cmd_vel topic.'
     )
 
-
-    # twist_mux_node = Node(
-    #     package="twist_mux",
-    #     executable="twist_mux",
-    #     parameters=[twist_mux_config_file,
-    #                 {'use_sim_time': use_sim_time}],
-    #     remappings=[('/cmd_vel_out', stamped_cmd_vel_out_topic)]
-    # )
+    twist_mux_node = Node(
+        package="twist_mux",
+        executable="twist_mux",
+        parameters=[twist_mux_config_file,
+                    {'use_sim_time': use_sim_time}],
+        remappings=[('/cmd_vel_out', stamped_cmd_vel_out_topic)]
+    )
     twist_unstamper_node = Node(
         package='twist_stamper',
         executable='twist_unstamper',
@@ -49,6 +48,6 @@ def generate_launch_description():
         twist_mux_config_file_arg,
         stamped_cmd_vel_out_topic_arg,
         unstamped_cmd_vel_out_topic_arg,
-        # twist_mux_node,
+        twist_mux_node,
         twist_unstamper_node
     ])
