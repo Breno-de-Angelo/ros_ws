@@ -76,7 +76,11 @@ def generate_launch_description():
 
         # Mapping
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(slam_toolbox_launch_path),
+            PathJoinSubstitution([autonomous_base_path, 'launch', 'slam_toolbox_async_online.launch.py']),
+            launch_arguments={
+                'use_sim_time': 'true',
+                'slam_config_file': PathJoinSubstitution([robot_path, 'config', 'mapper_params_online_async.yaml'])
+            }.items()
         ),
 
         # RViz
